@@ -1,14 +1,8 @@
 import type { Metadata } from "next";
-import { Azeret_Mono } from "next/font/google";
 import "../globals.css";
+import Footer from "@/components/core/Footer";
 import Navbar from "@/components/core/Navbar";
-
-
-
-const azeretMono = Azeret_Mono({
-  variable: "--font-azeretMono",
-  subsets: ["latin"],
-});
+import { fontVariables } from "@/lib/fonts";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -19,11 +13,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={` ${azeretMono.variable} h-full antialiased`}
+      className={`${fontVariables} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
+      {/* Browser extensions (e.g. ColorZilla) inject attributes on <body>; don't flag those as hydration errors */}
+      <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <Navbar />
         {children}
+        <Footer />
       </body>
     </html>
   );

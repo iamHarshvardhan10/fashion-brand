@@ -17,3 +17,14 @@ const upload = multer({
 })
 
 export const uploadSingleImage = upload.single('image')
+
+// Product gallery: up to 10 files per request in the `images` field
+export const uploadProductImages = upload.array('images', 10)
+
+// Banners: desktop image, an optional portrait crop for phones, and one image per price card
+// (itemImage0..itemImage3, matching the card's position)
+export const uploadBannerImages = upload.fields([
+    { name: 'image', maxCount: 1 },
+    { name: 'mobileImage', maxCount: 1 },
+    ...[0, 1, 2, 3].map((i) => ({ name: `itemImage${i}`, maxCount: 1 })),
+])

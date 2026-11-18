@@ -91,29 +91,70 @@ enum ProductTag {
   FEW_LEFT
 }
 
-enum Gender {
-  MEN
-  WOMEN
-  UNISEX
+// Top-level department shown in the navbar: Men, Women, Kids, Accessories ...
+// Categories are shared (T-Shirts exists once); each industry picks which categories it lists.
+// Products can belong to several industries (a unisex tee is in Men and Women).
+model Industry {
+  id            String             @id @default(cuid())
+  name          String             @unique
+  slug          String             @unique // /men, /women
+  description   String?
+  imageUrl      String?            @map("image_url") // shown in the navbar dropdown / industry page
+  imagePublicId String?            @map("image_public_id")
+  isActive      Boolean            @default(true) @map("is_active")
+  showInNav     Boolean            @default(true) @map("show_in_nav")
+  sortOrder     Int                @default(0) @map("sort_order")
+  categories    IndustryCategory[]
+  products      ProductIndustry[]
+  createdAt     DateTime           @default(now()) @map("created_at")
+  updatedAt     DateTime           @updatedAt @map("updated_at")
+
+  @@index([isActive, sortOrder])
+  @@map("industries")
+}
+
+// Which categories an industry lists in the navbar, in order
+model IndustryCategory {
+  industryId String   @map("industry_id")
+  industry   Industry @relation(fields: [industryId], references: [id], onDelete: Cascade)
+  categoryId String   @map("category_id")
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  sortOrder  Int      @default(0) @map("sort_order")
+
+  @@id([industryId, categoryId])
+  @@index([categoryId])
+  @@map("industry_categories")
+}
+
+model ProductIndustry {
+  productId  String   @map("product_id")
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  industryId String   @map("industry_id")
+  industry   Industry @relation(fields: [industryId], references: [id], onDelete: Cascade)
+
+  @@id([productId, industryId])
+  @@index([industryId])
+  @@map("product_industries")
 }
 
 // Top-level category, e.g. T-Shirts, Shirts, Jeans, Sneakers
 model Category {
-  id            String        @id @default(cuid())
-  name          String        @unique
-  slug          String        @unique // used in URLs: /tshirts
+  id            String             @id @default(cuid())
+  name          String             @unique
+  slug          String             @unique // used in URLs: /tshirts
   description   String?
-  imageUrl      String?       @map("image_url") // Cloudinary secure_url
-  imagePublicId String?       @map("image_public_id") // Cloudinary public_id (needed to delete/replace)
-  isActive      Boolean       @default(true) @map("is_active")
-  sortOrder     Int           @default(0) @map("sort_order") // display order on the storefront
+  imageUrl      String?            @map("image_url") // Cloudinary secure_url
+  imagePublicId String?            @map("image_public_id") // Cloudinary public_id (needed to delete/replace)
+  isActive      Boolean            @default(true) @map("is_active")
+  sortOrder     Int                @default(0) @map("sort_order") // display order on the storefront
   // Default size chart for every product in this category (a product can override it)
-  sizeChartId   String?       @map("size_chart_id")
-  sizeChart     SizeChart?    @relation(fields: [sizeChartId], references: [id], onDelete: SetNull)
+  sizeChartId   String?            @map("size_chart_id")
+  sizeChart     SizeChart?         @relation(fields: [sizeChartId], references: [id], onDelete: SetNull)
   subCategories SubCategory[]
   products      Product[]
-  createdAt     DateTime      @default(now()) @map("created_at")
-  updatedAt     DateTime      @updatedAt @map("updated_at")
+  industries    IndustryCategory[]
+  createdAt     DateTime           @default(now()) @map("created_at")
+  updatedAt     DateTime           @updatedAt @map("updated_at")
 
   @@index([isActive, sortOrder])
   @@map("categories")
@@ -160,40 +201,69 @@ model SizeChart {
 }
 
 model Product {
-  id              String        @id @default(cuid())
-  name            String
-  slug            String        @unique // /product/oversized-graphic-tee
-  description     String?
-  highlights      String[]      @default([]) // bullet points under the description
+  id                  String        @id @default(cuid())
+  name                String
+  slug                String        @unique // /product/oversized-graphic-tee
+  description         String?
+  highlights          String[]      @default([]) // bullet points under the description
   // Shown when a variant has no price override. Both in paise.
-  price           Int
-  mrp             Int
-  status          ProductStatus @default(DRAFT)
-  tag             ProductTag?
-  gender          Gender?
-  isFeatured      Boolean       @default(false) @map("is_featured") // trending / homepage picks
+  price               Int
+  mrp                 Int
+  status              ProductStatus @default(DRAFT)
+  tag                 ProductTag?
+  isFeatured          Boolean       @default(false) @map("is_featured") // trending / homepage picks
   // Denormalized from variants for fast listing queries; recompute when stock changes
-  totalStock      Int           @default(0) @map("total_stock")
-  categoryId      String        @map("category_id")
-  category        Category      @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  subCategoryId   String?       @map("sub_category_id")
-  subCategory     SubCategory?  @relation(fields: [subCategoryId], references: [id], onDelete: SetNull)
-  sizeChartId     String?       @map("size_chart_id") // overrides the category's chart
-  sizeChart       SizeChart?    @relation(fields: [sizeChartId], references: [id], onDelete: SetNull)
-  // SEO
-  metaTitle       String?       @map("meta_title")
-  metaDescription String?       @map("meta_description")
+  totalStock          Int           @default(0) @map("total_stock")
+  categoryId          String        @map("category_id")
+  category            Category      @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  subCategoryId       String?       @map("sub_category_id")
+  subCategory         SubCategory?  @relation(fields: [subCategoryId], references: [id], onDelete: SetNull)
+  sizeChartId         String?       @map("size_chart_id") // overrides the category's chart
+  sizeChart           SizeChart?    @relation(fields: [sizeChartId], references: [id], onDelete: SetNull)
+  // Identity & merchandising
+  brand               String?
+  styleCode           String?       @unique @map("style_code") // parent SKU, e.g. "TS-OVR-001"; prefixes variant SKUs
+  season              String? // "AW26", "SS27"
+  modelInfo           String?       @map("model_info") // "Model is 6'1\" and wears size M"
+  videoUrl            String?       @map("video_url")
+  // Admin-only: never sent to the storefront. Paise.
+  costPrice           Int?          @map("cost_price")
+  // Tax (prices are GST-inclusive)
+  gstRate             Int?          @map("gst_rate") // percent: 0, 5, 12, 18, 28
+  hsnCode             String?       @map("hsn_code")
+  // Legal Metrology / Consumer Protection (E-Commerce) Rules: shown on the product page
+  countryOfOrigin     String        @default("India") @map("country_of_origin")
+  manufacturerDetails String?       @map("manufacturer_details") // name + address
+  packerDetails       String?       @map("packer_details")
+  importerDetails     String?       @map("importer_details")
+  netQuantity         String?       @map("net_quantity") // "1 N", "100 ml"
+  // Shipping (packed parcel, used for courier rates)
+  weightGrams         Int?          @map("weight_grams")
+  lengthCm            Int?          @map("length_cm")
+  widthCm             Int?          @map("width_cm")
+  heightCm            Int?          @map("height_cm")
+  // Policies
+  isReturnable        Boolean       @default(true) @map("is_returnable")
+  isExchangeable      Boolean       @default(true) @map("is_exchangeable")
+  returnWindowDays    Int           @default(15) @map("return_window_days")
+  codAvailable        Boolean       @default(true) @map("cod_available")
+  maxPerOrder         Int?          @map("max_per_order") // per-customer quantity cap
+  // SEO & search
+  metaTitle           String?       @map("meta_title")
+  metaDescription     String?       @map("meta_description")
+  searchKeywords      String[]      @default([]) @map("search_keywords") // synonyms: "tee", "tshirt"
   // Ratings cache, recomputed when a review is approved
-  ratingAverage   Float         @default(0) @map("rating_average")
-  ratingCount     Int           @default(0) @map("rating_count")
-  publishedAt     DateTime?     @map("published_at")
-  createdAt       DateTime      @default(now()) @map("created_at")
-  updatedAt       DateTime      @updatedAt @map("updated_at")
+  ratingAverage       Float         @default(0) @map("rating_average")
+  ratingCount         Int           @default(0) @map("rating_count")
+  publishedAt         DateTime?     @map("published_at")
+  createdAt           DateTime      @default(now()) @map("created_at")
+  updatedAt           DateTime      @updatedAt @map("updated_at")
 
   images       ProductImage[]
   variants     ProductVariant[]
   attributes   ProductAttribute[]
   collections  CollectionProduct[]
+  industries   ProductIndustry[] // Men / Women / ... (replaces the old gender field)
   wishlistedBy WishlistItem[]
   reviews      Review[]
   orderItems   OrderItem[]
@@ -215,6 +285,7 @@ model ProductImage {
   url       String // Cloudinary secure_url
   publicId  String          @map("public_id") // Cloudinary public_id
   alt       String?
+  color     String? // shown when this colour is picked; null = all colours
   sortOrder Int             @default(0) @map("sort_order") // 0 = main image
   createdAt DateTime        @default(now()) @map("created_at")
 
@@ -228,6 +299,7 @@ model ProductVariant {
   productId         String   @map("product_id")
   product           Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
   sku               String   @unique
+  barcode           String?  @unique // EAN-13 / UPC printed on the tag
   size              String // "M", "32", "UK 8"
   color             String? // "Black"
   colorHex          String?  @map("color_hex") // "#000000" for swatches
@@ -316,12 +388,18 @@ enum BannerPlacement {
   PROMO_STRIP // thin announcement bar
 }
 
+// One row per creative. HERO shows every live row as a carousel; the other placements
+// are single slots that show the first live row (lowest sortOrder).
 model Banner {
   id                  String          @id @default(cuid())
-  title               String
-  subtitle            String?
+  title               String // headline; newlines split it into lines
+  subtitle            String? // small label / lead-in text ("Up to", "Collection under")
+  highlight           String? // emphasised offer ("30% off", "₹999/-")
   ctaLabel            String?         @map("cta_label")
   linkUrl             String?         @map("link_url")
+  backgroundColor     String?         @map("background_color") // hex, matches the photo's backdrop
+  // PRICE_DROP cards: [{ id, label, value, linkUrl, imageUrl, imagePublicId }]
+  items               Json?
   imageUrl            String          @map("image_url") // desktop
   imagePublicId       String          @map("image_public_id")
   mobileImageUrl      String?         @map("mobile_image_url")

@@ -1,7 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
-import { HeartIcon, MenuIcon, SearchIcon, ShoppingBagIcon, UserIcon } from "lucide-react";
+import { ChevronDownIcon, HeartIcon, MenuIcon, SearchIcon, ShoppingBagIcon, UserIcon } from "lucide-react";
+import { getNavigation } from "@/lib/navigation";
+import { industryHref } from "@/lib/nav-links";
 import { cn } from "@/lib/utils";
+import NavMenu from "@/components/core/NavMenu";
 import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,12 +19,9 @@ import {
     SheetTrigger,
 } from "@/components/ui/sheet";
 
-const menuLinks = [
-    { label: "New In", href: "/new-in" },
-    { label: "Women", href: "/women" },
-    { label: "Men", href: "/men" },
-    { label: "Sneakers", href: "/sneakers" },
-    { label: "Accessories", href: "/accessories" },
+// Fixed links around the industries (Men, Women ...), which come from Dashboard → Industries
+const leadingLinks = [{ label: "New In", href: "/new-in" }];
+const trailingLinks = [
     { label: "Collections", href: "/collections" },
     { label: "Sale", href: "/sale" },
 ];
@@ -32,11 +32,7 @@ const secondaryLinks = [
     { label: "Help & Contact", href: "/help" },
 ];
 
-const categoryLinks = [
-    { label: "Men", href: "/men" },
-    { label: "Women", href: "/women" },
-    { label: "Sneakers", href: "/sneakers" },
-];
+const menuLinkClass = "block py-3 font-didot text-xl tracking-wide transition-colors hover:text-muted-foreground";
 
 const offers = [
     "Free shipping on orders over ₹2,999",
@@ -48,7 +44,9 @@ const offers = [
 // TODO: replace with the real cart count
 const bagCount = 0;
 
-export default function Navbar() {
+export default async function Navbar() {
+    const industries = await getNavigation();
+
     return (
         <header className="sticky top-0 z-40 h-(--header-height) w-full bg-background/90 backdrop-blur">
             {/* Offer marquee */}
@@ -82,14 +80,55 @@ export default function Navbar() {
                                     Menu
                                 </SheetTitle>
                             </SheetHeader>
-                            <ul className="flex flex-col px-6">
-                                {menuLinks.map((link) => (
+                            <ul className="flex flex-col overflow-y-auto px-6">
+                                {leadingLinks.map((link) => (
                                     <li key={link.href}>
-                                        <SheetClose
-                                            render={<Link href={link.href} />}
-                                            nativeButton={false}
-                                            className="block py-3 font-didot text-xl tracking-wide transition-colors hover:text-muted-foreground"
-                                        >
+                                        <SheetClose render={<Link href={link.href} />} nativeButton={false} className={menuLinkClass}>
+                                            {link.label}
+                                        </SheetClose>
+                                    </li>
+                                ))}
+                                {industries.map((industry) => (
+                                    <li key={industry.id}>
+                                        {industry.categories.length ? (
+                                            <details className="group">
+                                                <summary className={cn(menuLinkClass, "flex cursor-pointer list-none items-center justify-between [&::-webkit-details-marker]:hidden")}>
+                                                    {industry.name}
+                                                    <ChevronDownIcon className="size-4 transition-transform group-open:rotate-180" />
+                                                </summary>
+                                                <ul className="mb-2 grid gap-1 border-l pl-4">
+                                                    {industry.categories.map((category) => (
+                                                        <li key={category.id}>
+                                                            <SheetClose
+                                                                render={<Link href={industryHref(industry.slug, category.slug)} />}
+                                                                nativeButton={false}
+                                                                className="block py-1.5 text-sm tracking-wide uppercase transition-colors hover:text-muted-foreground"
+                                                            >
+                                                                {category.name}
+                                                            </SheetClose>
+                                                        </li>
+                                                    ))}
+                                                    <li>
+                                                        <SheetClose
+                                                            render={<Link href={industryHref(industry.slug)} />}
+                                                            nativeButton={false}
+                                                            className="block py-1.5 font-mono text-[11px] tracking-[0.2em] text-muted-foreground uppercase hover:text-foreground"
+                                                        >
+                                                            Shop all {industry.name}
+                                                        </SheetClose>
+                                                    </li>
+                                                </ul>
+                                            </details>
+                                        ) : (
+                                            <SheetClose render={<Link href={industryHref(industry.slug)} />} nativeButton={false} className={menuLinkClass}>
+                                                {industry.name}
+                                            </SheetClose>
+                                        )}
+                                    </li>
+                                ))}
+                                {trailingLinks.map((link) => (
+                                    <li key={link.href}>
+                                        <SheetClose render={<Link href={link.href} />} nativeButton={false} className={menuLinkClass}>
                                             {link.label}
                                         </SheetClose>
                                     </li>
@@ -111,18 +150,7 @@ export default function Navbar() {
                         </SheetContent>
                     </Sheet>
 
-                    <ul className="hidden items-center gap-6 md:flex">
-                        {categoryLinks.map((link) => (
-                            <li key={link.href}>
-                                <Link
-                                    href={link.href}
-                                    className="text-xs font-medium tracking-[0.2em] uppercase underline-offset-8 transition-colors hover:underline"
-                                >
-                                    {link.label}
-                                </Link>
-                            </li>
-                        ))}
-                    </ul>
+                    <NavMenu industries={industries} />
                 </div>
 
                 {/* Center: logo */}

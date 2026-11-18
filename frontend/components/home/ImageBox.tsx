@@ -15,7 +15,7 @@ export default function ImageBox({ src, alt, className, children }: ImageBoxProp
             role="img"
             aria-label={alt}
             className={cn("relative overflow-hidden bg-neutral-200 bg-cover bg-center", className)}
-            style={{ backgroundImage: `url(${src})` }}
+            style={src ? { backgroundImage: `url(${src})` } : undefined}
         >
             {children}
         </div>

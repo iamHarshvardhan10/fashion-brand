@@ -21,6 +21,29 @@ export const categoryEndpoints = {
     CATEGORY_DETAILS_API: (id: string) => `${BASE_URL}/categories/${id}`,
 };
 
+export const bannerEndpoints = {
+    BANNERS_API: `${BASE_URL}/banners`,
+    BANNER_DETAILS_API: (id: string) => `${BASE_URL}/banners/${id}`,
+};
+
+export const industryEndpoints = {
+    INDUSTRIES_API: `${BASE_URL}/industries`,
+    INDUSTRY_DETAILS_API: (id: string) => `${BASE_URL}/industries/${id}`,
+};
+
+export const collectionEndpoints = {
+    COLLECTIONS_API: `${BASE_URL}/collections`,
+    COLLECTION_DETAILS_API: (id: string) => `${BASE_URL}/collections/${id}`,
+};
+
+export const productEndpoints = {
+    PRODUCTS_API: `${BASE_URL}/products`,
+    PRODUCT_DETAILS_API: (id: string) => `${BASE_URL}/products/${id}`,
+    PRODUCT_IMAGES_API: (id: string) => `${BASE_URL}/products/${id}/images`,
+    PRODUCT_IMAGE_API: (id: string, imageId: string) => `${BASE_URL}/products/${id}/images/${imageId}`,
+    PRODUCT_IMAGE_ORDER_API: (id: string) => `${BASE_URL}/products/${id}/images/order`,
+};
+
 export const subCategoryEndpoints = {
     SUB_CATEGORIES_API: `${BASE_URL}/sub-categories`,
     SUB_CATEGORY_DETAILS_API: (id: string) => `${BASE_URL}/sub-categories/${id}`,

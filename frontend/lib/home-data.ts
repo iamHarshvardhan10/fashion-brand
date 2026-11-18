@@ -22,21 +22,6 @@ export const categories = [
     { label: "Perfumes", href: "/perfumes", image: "/categories/perfumes.jpg" },
 ];
 
-export const edits = [
-    { title: "The Bomber Edit", text: "Layers that mean business", href: "/collections/bomber", image: "/edits/bomber.jpg" },
-    { title: "Formal Shirts", text: "Sharp, never stiff", href: "/collections/formal", image: "/edits/formal.jpg" },
-    { title: "Hand Embroidered", text: "Stitched to stand out", href: "/collections/embroidered", image: "/edits/embroidered.jpg" },
-];
-
-export const vibes = [
-    { title: "Weekend Plans", href: "/vibes/weekend", image: "/vibes/weekend.jpg" },
-    { title: "Date Night", href: "/vibes/date-night", image: "/vibes/date-night.jpg" },
-    { title: "Concert Fits", href: "/vibes/concert", image: "/vibes/concert.jpg" },
-    { title: "Office Hours", href: "/vibes/office", image: "/vibes/office.jpg" },
-    { title: "Vacation Mode", href: "/vibes/vacation", image: "/vibes/vacation.jpg" },
-    { title: "Street Ready", href: "/vibes/street", image: "/vibes/street.jpg" },
-];
-
 export const productTabs = [
     { value: "all", label: "All" },
     { value: "tshirts", label: "T-Shirts" },
@@ -58,13 +43,6 @@ export const products: Product[] = [
     { id: "p10", name: "Court Low Sneakers", category: "sneakers", price: 2999, mrp: 4499, tag: "New", image: "/products/p10.jpg" },
     { id: "p11", name: "Chunky Runner", category: "sneakers", price: 3499, mrp: 4999, image: "/products/p11.jpg" },
     { id: "p12", name: "Suede Skate Shoe", category: "sneakers", price: 2799, mrp: 3999, tag: "Few left", image: "/products/p12.jpg" },
-];
-
-export const priceDrops = [
-    { label: "Tees from", value: "₹699", href: "/tshirts", image: "/products/p2.jpg" },
-    { label: "Shirts from", value: "₹1,299", href: "/shirts", image: "/products/p5.jpg" },
-    { label: "Jeans from", value: "₹1,799", href: "/jeans", image: "/products/p8.jpg" },
-    { label: "Sneakers", value: "50% off", href: "/sneakers", image: "/products/p10.jpg" },
 ];
 
 // The limited drop the countdown counts down to (IST)

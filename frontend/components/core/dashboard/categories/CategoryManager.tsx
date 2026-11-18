@@ -27,6 +27,7 @@ import {
     type CategoryFormValues,
     type SubCategory,
 } from "@/services/operations/categoryAPI";
+import { refreshNavigation } from "@/lib/actions/navigation";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,9 @@ import { Switch } from "@/components/ui/switch";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import CategoryFormDialog from "./CategoryFormDialog";
 import DeleteDialog from "./DeleteDialog";
+
+// Category names and visibility show up in the navbar dropdowns, which are cached
+const syncNavbar = () => refreshNavigation().catch(() => {});
 
 type FormState =
     | { kind: "category"; category?: Category }
@@ -143,14 +147,14 @@ export default function CategoryManager() {
             else await createSubCategory(form.parent.id, values);
             setExpanded((prev) => new Set(prev).add(form.parent.id));
         }
-        await load();
+        await Promise.all([load(), syncNavbar()]);
     }
 
     async function handleDelete() {
         if (!toDelete) return;
         if (toDelete.kind === "category") await deleteCategory(toDelete.category.id);
         else await deleteSubCategory(toDelete.sub.id);
-        await load();
+        await Promise.all([load(), syncNavbar()]);
     }
 
     // Optimistic toggle, rolled back if the request fails
@@ -172,6 +176,7 @@ export default function CategoryManager() {
         try {
             if (target.subId) await toggleSubCategory(target.subId, isActive);
             else await toggleCategory(target.categoryId, isActive);
+            syncNavbar();
         } catch (error) {
             apply(!isActive);
             setActionError(error instanceof ApiError ? error.message : "Could not update status");
